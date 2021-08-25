@@ -9,6 +9,7 @@ FROM debian:stretch-slim
 RUN mkdir /taliban && chown -R nobody:nogroup /taliban
 COPY --from=builder /go/src/github.com/lichuan0620/taliban/taliban /usr/local/bin/taliban
 COPY examples /taliban/examples
+COPY LICENSE /taliban/LICENSE
 
 USER       nobody
 WORKDIR    /taliban
