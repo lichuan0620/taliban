@@ -1,0 +1,10 @@
+factories:
+  - exposition_path: "/metrics"
+    exposition_format: "prometheus"
+    vectors:
+      - type: "gauge"
+        label_count: 3
+        label_cardinality: 10
+        distribution: "random"
+        sample_interval: "1s"
+        sample_precision: 6

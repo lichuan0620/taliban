@@ -1,0 +1,34 @@
+factories:
+  - exposition_path: "/metrics"
+    exposition_format: "openmetrics"
+    vectors:
+      - type: "histogram"
+        distribution: "normal"
+        sample_precision: 12
+        label_count: 2
+        label_cardinality: 10
+        sample_interval: "1s"
+        sample_min: "0.001"
+        sample_max: "10"
+        sample_std_dev: "0.5"
+        sample_mean: "1.5"
+      - type: "histogram"
+        distribution: "normal"
+        sample_precision: 6
+        label_count: 3
+        label_cardinality: 10
+        sample_interval: "1s"
+        sample_min: "0.001"
+        sample_max: "10"
+        sample_std_dev: "0.5"
+        sample_mean: "1.5"
+      - type: "histogram"
+        distribution: "normal"
+        sample_precision: 3
+        label_count: 4
+        label_cardinality: 10
+        sample_interval: "1s"
+        sample_min: "0.001"
+        sample_max: "10"
+        sample_std_dev: "0.5"
+        sample_mean: "1.5"
