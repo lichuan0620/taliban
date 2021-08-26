@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taliban
+  labels:
+    app: taliban
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: taliban
+  template:
+    metadata:
+      labels:
+        app: taliban
+    spec:
+      containers:
+        - name: taliban
+          image: docker.io/lichuan0620/taliban:latest
+          args:
+            - -p
+            - examples/histogram.yaml
+          ports:
+            - containerPort: 8080
+              name: metrics
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taliban
+  labels:
+    app: taliban
+spec:
+  ports:
+    - port: 8080
+      name: metrics
+      targetPort: metrics
+  selector:
+    app: taliban
+  type: ClusterIP

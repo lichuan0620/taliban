@@ -26,3 +26,5 @@ curl localhost:8080/metrics
 # naughty_mccarthy{amazing_euler6="sleepy_lamarr4",dazzling_poitras1="vigilant_bell2",great_jemison6="zealous_mendel7"} -1.6770941555759105e+307
 # ...
 ```
+
+You might want to start with the provided [sample deployment](./bundle.yaml) to deploy on Kubernetes. 
