@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -17,7 +18,40 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func BuildGenerateSampleFunc(cfg *config.SampleGeneratorConfig) (func() decimal.Decimal, error) {
+type SampleGenerator interface {
+	Get() float64
+}
+
+type sampleGenerator struct {
+	lock    sync.Mutex
+	cur     int
+	samples []float64
+}
+
+func NewSampleGenerator(cfg *config.SampleGeneratorConfig) (SampleGenerator, error) {
+	const samplePoolSize = 4096
+	generateSampleFunc, err := buildGenerateSampleFunc(cfg)
+	if err != nil {
+		return nil, err
+	}
+	samples := make([]float64, samplePoolSize)
+	for i := range samples {
+		samples[i], _ = generateSampleFunc().Float64()
+	}
+	return &sampleGenerator{samples: samples}, nil
+}
+
+func (sg *sampleGenerator) Get() float64 {
+	sg.lock.Lock()
+	defer sg.lock.Unlock()
+	sg.cur++
+	if sg.cur >= len(sg.samples) {
+		sg.cur = 0
+	}
+	return sg.samples[sg.cur]
+}
+
+func buildGenerateSampleFunc(cfg *config.SampleGeneratorConfig) (func() decimal.Decimal, error) {
 	var err error
 	min, max := decimal.NewFromFloat(math.MaxFloat64), decimal.NewFromFloat(-math.MaxFloat64)
 	if len(cfg.Max) > 0 {

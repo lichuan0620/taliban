@@ -84,7 +84,7 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			return nil, nil, errors.Errorf("failed to generate label values (try to reduce label cardinality)")
 		}
 	}
-	genSampleFunc, err := BuildGenerateSampleFunc(&cfg.SampleGeneratorConfig)
+	generator, err := NewSampleGenerator(&cfg.SampleGeneratorConfig)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,8 +100,7 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
-			sample, _ := genSampleFunc().Float64()
-			vec.With(labels).Set(sample)
+			vec.With(labels).Set(generator.Get())
 		}
 		collector = vec
 	case model.MetricTypeCounter:
@@ -113,8 +112,7 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
-			sample, _ := genSampleFunc().Float64()
-			vec.With(labels).Add(sample)
+			vec.With(labels).Add(generator.Get())
 		}
 		collector = vec
 	case model.MetricTypeSummary:
@@ -126,8 +124,7 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
-			sample, _ := genSampleFunc().Float64()
-			vec.With(labels).Observe(sample)
+			vec.With(labels).Observe(generator.Get())
 		}
 		collector = vec
 	case model.MetricTypeHistogram:
@@ -150,8 +147,7 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			Buckets:   buckets,
 		}, labelNames)
 		handle = func(labels prometheus.Labels) {
-			sample, _ := genSampleFunc().Float64()
-			vec.With(labels).Observe(sample)
+			vec.With(labels).Observe(generator.Get())
 		}
 		collector = vec
 	default:
