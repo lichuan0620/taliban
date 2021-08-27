@@ -96,13 +96,20 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 	if len(cfg.NamePrefix) > 0 {
 		name = strings.TrimSuffix(cfg.NamePrefix, "_") + "_" + name
 	}
+	constLabels := map[string]string{
+		"type":              string(cfg.Type),
+		"precision":         strconv.Itoa(cfg.SampleGeneratorConfig.Precision),
+		"label_count":       strconv.Itoa(cfg.LabelCount),
+		"label_cardinality": strconv.Itoa(cfg.LabelCardinality),
+	}
 	var collector prometheus.Collector
 	switch cfg.Type {
 	case model.MetricTypeGauge:
 		vec := prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name: name,
-				Help: "Arbitrarily-generated gauge metrics",
+				Name:        name,
+				Help:        "Arbitrarily-generated gauge metrics",
+				ConstLabels: constLabels,
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
@@ -113,8 +120,9 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 		name += "_total"
 		vec := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
-				Name: name,
-				Help: "Arbitrarily-generated counter metrics",
+				Name:        name,
+				Help:        "Arbitrarily-generated counter metrics",
+				ConstLabels: constLabels,
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
@@ -124,8 +132,9 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 	case model.MetricTypeSummary:
 		vec := prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
-				Name: name,
-				Help: "Arbitrarily-generated summary metrics",
+				Name:        name,
+				Help:        "Arbitrarily-generated summary metrics",
+				ConstLabels: constLabels,
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
@@ -146,9 +155,10 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			sort.Float64s(buckets)
 		}
 		vec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    name,
-			Help:    "Arbitrarily-generated histogram metrics",
-			Buckets: buckets,
+			Name:        name,
+			Help:        "Arbitrarily-generated histogram metrics",
+			Buckets:     buckets,
+			ConstLabels: constLabels,
 		}, labelNames)
 		handle = func(labels prometheus.Labels) {
 			vec.With(labels).Observe(generator.Get())
