@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -12,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 )
 
 type Factory interface {
@@ -41,6 +43,7 @@ func NewFactory(cfg *config.FactoryConfig) (Factory, error) {
 	}
 	runners := make([]runner, len(cfg.Vectors))
 	for i := range cfg.Vectors {
+		log.Infof("constructing vector (%d/%d)", i, len(cfg.Vectors))
 		collector, r, err := buildVector(&cfg.Vectors[i])
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid vector")
@@ -68,8 +71,8 @@ func (f *factory) Handler() http.Handler {
 
 func (f *factory) Run(stopCh <-chan struct{}) {
 	for i := range f.runners {
-		runner := f.runners[i]
-		go runner(stopCh)
+		r := f.runners[i]
+		go r(stopCh)
 	}
 }
 
@@ -89,14 +92,17 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 		return nil, nil, err
 	}
 	var handle func(labels prometheus.Labels)
+	name := namesgenerator.GetRandomName(0)
+	if len(cfg.NamePrefix) > 0 {
+		name = strings.TrimSuffix(cfg.NamePrefix, "_") + "_" + name
+	}
 	var collector prometheus.Collector
 	switch cfg.Type {
 	case model.MetricTypeGauge:
 		vec := prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Namespace: cfg.NamePrefix,
-				Name:      namesgenerator.GetRandomName(0),
-				Help:      "Arbitrarily-generated gauge metrics",
+				Name: name,
+				Help: "Arbitrarily-generated gauge metrics",
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
@@ -104,11 +110,11 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 		}
 		collector = vec
 	case model.MetricTypeCounter:
+		name += "_total"
 		vec := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace: cfg.NamePrefix,
-				Name:      namesgenerator.GetRandomName(0) + "_total",
-				Help:      "Arbitrarily-generated counter metrics",
+				Name: name,
+				Help: "Arbitrarily-generated counter metrics",
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
@@ -118,9 +124,8 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 	case model.MetricTypeSummary:
 		vec := prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
-				Namespace: cfg.NamePrefix,
-				Name:      namesgenerator.GetRandomName(0),
-				Help:      "Arbitrarily-generated summary metrics",
+				Name: name,
+				Help: "Arbitrarily-generated summary metrics",
 			}, labelNames,
 		)
 		handle = func(labels prometheus.Labels) {
@@ -141,10 +146,9 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 			sort.Float64s(buckets)
 		}
 		vec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: cfg.NamePrefix,
-			Name:      namesgenerator.GetRandomName(0),
-			Help:      "Arbitrarily-generated histogram metrics",
-			Buckets:   buckets,
+			Name:    name,
+			Help:    "Arbitrarily-generated histogram metrics",
+			Buckets: buckets,
 		}, labelNames)
 		handle = func(labels prometheus.Labels) {
 			vec.With(labels).Observe(generator.Get())
@@ -154,6 +158,13 @@ func buildVector(cfg *config.VectorConfig) (prometheus.Collector, runner, error)
 		return nil, nil, errors.Errorf("unknown metric type \"%s\"", cfg.Type)
 	}
 	interval := time.Duration(cfg.SampleGeneratorConfig.Interval)
+	log.WithFields(log.Fields{
+		"type":        cfg.Type,
+		"name":        name,
+		"labels":      labelNames,
+		"cardinality": cfg.LabelCardinality,
+		"precision":   cfg.SampleGeneratorConfig.Precision,
+	}).Info("vector constructed")
 	return collector, func(stopCh <-chan struct{}) {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()

@@ -27,13 +27,21 @@ var command = cobra.Command{
 		background := context.Background()
 		mux := http.NewServeMux()
 		for i := range cfg.Factories {
+			logEntry := log.WithFields(log.Fields{
+				"path":    cfg.Factories[i].ExpositionPath,
+				"format":  cfg.Factories[i].ExpositionFormat,
+				"vectors": len(cfg.Factories[i].Vectors),
+			})
+			logEntry.Infof("constructing metric factory (%d/%d)", i, len(cfg.Factories))
 			factory, err := metrics.NewFactory(&cfg.Factories[i])
 			if err != nil {
 				return errors.Wrap(err, "build metrics factory")
 			}
 			mux.Handle(cfg.Factories[i].ExpositionPath, factory.Handler())
 			go factory.Run(background.Done())
+			logEntry.Info("metric factory running")
 		}
+		log.WithField("address", listenAddress).Info("start listening for requests")
 		return http.ListenAndServe(listenAddress, mux)
 	},
 }
