@@ -1,4 +1,4 @@
-module github.com/lichuan0620/tailiban
+module github.com/lichuan0620/taliban
 
 go 1.16
 

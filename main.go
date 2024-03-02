@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/lichuan0620/tailiban/pkg/config"
-	"github.com/lichuan0620/tailiban/pkg/metrics"
+	"github.com/lichuan0620/taliban/pkg/config"
+	"github.com/lichuan0620/taliban/pkg/metrics"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

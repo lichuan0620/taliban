@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	"github.com/lichuan0620/tailiban/pkg/config"
-	"github.com/lichuan0620/tailiban/pkg/model"
+	"github.com/lichuan0620/taliban/pkg/config"
+	"github.com/lichuan0620/taliban/pkg/model"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 )

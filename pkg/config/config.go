@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/lichuan0620/tailiban/pkg/model"
+	"github.com/lichuan0620/taliban/pkg/model"
 	"github.com/pkg/errors"
 	prommodel "github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
