@@ -1,0 +1,40 @@
+factories:
+  - exposition_path: "/metrics"
+    exposition_format: "prometheus"
+    vectors:
+      - type: gauge
+        name_prefix: large_number_
+        label_count: 3
+        label_cardinality: 5
+        distribution: random
+        sample_interval: 1s
+        sample_precision: 3
+        sample_max: "10000000000"
+        sample_min: "100000000"
+      - type: gauge
+        name_prefix: large_number_long_name_buffer_
+        label_count: 3
+        label_cardinality: 5
+        distribution: random
+        sample_interval: 1s
+        sample_precision: 3
+        sample_max: "10000000000"
+        sample_min: "100000000"
+      - type: gauge
+        name_prefix: small_number_
+        label_count: 3
+        label_cardinality: 5
+        distribution: random
+        sample_interval: 1s
+        sample_precision: 3
+        sample_max: "1000"
+        sample_min: "0"
+      - type: gauge
+        name_prefix: small_number_long_name_buffer_
+        label_count: 3
+        label_cardinality: 5
+        distribution: random
+        sample_interval: 1s
+        sample_precision: 3
+        sample_max: "1000"
+        sample_min: "0"
